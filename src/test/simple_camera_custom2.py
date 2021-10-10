@@ -26,7 +26,8 @@ while 1:
     time2 = time.time()
     ret_val, img = cam.read()
     if len(rectangles) == 0 or time2 - time1 > interval:
-        rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        rgb_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         rectangles = detector(rgb_image)
         time1 = time2
 
