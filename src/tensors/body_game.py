@@ -143,6 +143,7 @@ def run_detect(message_queue):
 
 
 if __name__ == '__main__':
+    # TODO: 使用进程：https://www.cnblogs.com/guguobao/p/9398653.html
     global_message_queue = MessageQueue()
     threads = [
         threading.Thread(target=run_game, args=(global_message_queue,)),
