@@ -41,12 +41,13 @@ class BodyDetect:
                         continue
                     cv2.circle(img, (int(lm.x * w), int(lm.y * h)), 5, (255, 0, 0), cv2.FILLED)
                     current_points.add(_id)
-                    current_points_pos[_id] = (lm.x, lm.y)
+                    current_points_pos[_id] = (int(lm.x * w), int(lm.y * h))
 
                 if current_points & self.right_hand_points == self.right_hand_points:
                     logger.critical('Detect Attack Action!')
                     attack_message = Message(action='ATTACK')
-                    # attack_message.mat_data = self.get_hand_area(self.right_hand_points, current_points_pos)
+                    attack_message.mat_data = self.get_hand_area(self.right_hand_points, current_points_pos, img)
+                    cv2.rectangle(img, current_points_pos[14], current_points_pos[20], (0, 128, 128), 3)
                     self.queue.put(attack_message)
                 if current_points & self.left_hand_points == self.left_hand_points:
                     defend_message = Message(action='DEFEND')
@@ -78,5 +79,4 @@ class BodyDetect:
                 max_x = x
             if max_y is None or max_y < y:
                 max_y = y
-        area = mat[min_x-10:max_x+10, min_y-10:max_y+10]
-        return cv2.cvtColor(area, cv2.COLOR_RGB2BGR)
+        return mat[min_y-100:max_y+100, min_x-100:max_x+100]
