@@ -54,3 +54,5 @@ urllib3==1.26.8
 Werkzeug==2.0.2
 wrapt==1.13.3
 zipp==3.7.0
+PyAutoGUI==0.9.53
+pynput==1.7.6
