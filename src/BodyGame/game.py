@@ -1,6 +1,7 @@
 import pathlib
 import pygame
 import queue as queue_lib
+import random
 import sys
 import time
 
@@ -18,20 +19,25 @@ class UltraManBeatMonsterGame:
 
         self.window_size = 800, 600
         self.screen = pygame.display.set_mode(self.window_size)
+        self.text = None
 
-        self.image_hero = self._scale_image(self._load_image('game_outman.png'), (80, 120))
-        self.image_monster = self._scale_image(self._load_image('game_monster.jpg'), (80, 120))
+        self.image_hero_static = self._scale_image(self._load_image('game_outman_2.png'), (80, 120))
+        self.image_hero_attack = self._scale_image(self._load_image('game_outman_3.png'), (80, 120))
+        self.image_monster = self._scale_image(self._load_image('game_monster_2.png'), (80, 120))
+        self.image_monster_part1 = self._scale_image(self._load_image('game_monster_2_1.png'), (80, 60))
+        self.image_monster_part2 = self._scale_image(self._load_image('game_monster_2_0.png'), (80, 60))
+
         self.image_start_bg = self._load_image('game_outman_in.jpg')
 
-        self.image_attack = self._scale_image(self._load_image('attack2.png', is_alpha=True), (680, 40))
+        self.image_attack = self._scale_image(self._load_image('attack3.png', is_alpha=True), (680, 40))
         self.image_explode = self._scale_image(self._load_image('explode1.png', is_alpha=True), (180, 80))
 
         self.pos_start_bg = 60, 30
         self.pos_hero = 10, 240
         self.pos_monster = 660, 240
         self.pos_attack_from = (
-            self.pos_hero[0] + self.image_hero.get_size()[0] / 3,
-            self.pos_hero[1] + self.image_hero.get_size()[1] / 4
+            self.pos_hero[0] + self.image_hero_static.get_size()[0] / 3,
+            self.pos_hero[1] + self.image_hero_static.get_size()[1] / 4
         )
         self.pos_attack_to = (
             self.pos_monster[0] + self.image_monster.get_size()[0] / 2,
@@ -42,6 +48,12 @@ class UltraManBeatMonsterGame:
             self.pos_monster[0] + self.image_monster.get_size()[0] / 2 - self.image_explode.get_size()[0] / 2,
             self.pos_monster[1] + self.image_monster.get_size()[1] / 2 - self.image_explode.get_size()[1] / 2
         )
+
+        self.count_attack_to_destroy_monster = 800
+        self.count_monster_number = 0
+        self.count_score = 0
+
+        self.ts_last_monster_generate = 0
 
     def _load_image(self, file_name, is_alpha=False):
         image_file = self.resource_dir.joinpath(file_name)
@@ -54,8 +66,19 @@ class UltraManBeatMonsterGame:
     def _scale_image(img, size=(100, 100)):
         return pygame.transform.scale(img, size)
 
+    def random_generate_monster(self, ts):
+        if self.count_monster_number > 0:
+            return True
+        if ts - self.ts_last_monster_generate > 3 and random.choice([True, False]):
+            logger.critical('Generate a Monster!')
+            self.ts_last_monster_generate = ts
+            self.count_monster_number += 1
+            return True
+        return False
+
     def _run(self):
         pygame.init()
+        self.text = pygame.font.SysFont('arial', 30)
         is_attacking = 0
         logger.critical('PyGame init success, starting...')
         start_ts = time.time()
@@ -85,23 +108,46 @@ class UltraManBeatMonsterGame:
             except queue_lib.Empty:
                 first_message = None
 
+            self.screen.fill(color=(0, 0, 0))
+            score_text = self.text.render("Score: {}".format(self.count_score), False, (255, 0, 255))
+            self.screen.blit(score_text, (350, 10))
+
+            if not self.random_generate_monster(current_ts):
+                is_attacking = 0
+                self.screen.blit(self.image_hero_static, self.pos_hero)
+                pygame.display.update()
+                continue
+
             if is_attacking == 0 and first_message is not None and first_message.action == 'ATTACK':
                 logger.critical(f'Got Attack Message: {first_message}')
-                self.screen.blit(self.image_hero, self.pos_hero)
+                self.screen.blit(self.image_hero_attack, self.pos_hero)
                 self.screen.blit(self.image_monster, self.pos_monster)
                 self.screen.blit(self.image_attack, self.pos_attack_from)
                 self.screen.blit(self.image_explode, self.pos_explode)
                 is_attacking += 1
-            elif 0 < is_attacking <= 100:
-                self.screen.blit(self.image_hero, self.pos_hero)
-                self.screen.blit(self.image_monster, self.pos_monster)
-                self.screen.blit(self.image_attack, self.pos_attack_from)
-                self.screen.blit(self.image_explode, self.pos_explode)
+            elif 0 < is_attacking <= self.count_attack_to_destroy_monster:
+
+                # 最后4/5撕裂怪兽
+                if is_attacking >= self.count_attack_to_destroy_monster * (2/3):
+                    self.screen.blit(self.image_hero_attack, self.pos_hero)
+                    # self.screen.blit(self.image_monster, self.pos_monster)
+                    self.screen.blit(self.image_monster_part1, (self.pos_monster[0], self.pos_monster[1]-30))
+                    self.screen.blit(self.image_monster_part2, (self.pos_monster[0], self.pos_monster[1]+60))
+                    # self.screen.blit(self.image_attack, self.pos_attack_from)
+                    self.screen.blit(self.image_explode, self.pos_explode)
+                else:
+                    self.screen.blit(self.image_hero_attack, self.pos_hero)
+                    self.screen.blit(self.image_monster, self.pos_monster)
+                    self.screen.blit(self.image_attack, self.pos_attack_from)
+                    # self.screen.blit(self.image_explode, self.pos_explode)
                 is_attacking += 1
+                if is_attacking >= self.count_attack_to_destroy_monster:
+                    self.count_monster_number -= 1
+                    self.count_score += 1
+                    is_attacking = 0
             else:
-                self.screen.fill(color=(0, 0, 0))
                 is_attacking = 0
-                self.screen.blit(self.image_hero, self.pos_hero)
+                self.screen.blit(self.image_hero_static, self.pos_hero)
                 self.screen.blit(self.image_monster, self.pos_monster)
 
             pygame.display.update()
