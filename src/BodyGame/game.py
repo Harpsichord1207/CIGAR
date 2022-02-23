@@ -26,11 +26,10 @@ class UltraManBeatMonsterGame:
         self.image_monster = self._scale_image(self._load_image('game_monster_2.png'), (80, 120))
         self.image_monster_part1 = self._scale_image(self._load_image('game_monster_2_1.png'), (80, 60))
         self.image_monster_part2 = self._scale_image(self._load_image('game_monster_2_0.png'), (80, 60))
-
         self.image_start_bg = self._load_image('game_outman_in.jpg')
-
         self.image_attack = self._scale_image(self._load_image('attack3.png', is_alpha=True), (680, 40))
         self.image_explode = self._scale_image(self._load_image('explode1.png', is_alpha=True), (180, 80))
+        self.image_hand = None
 
         self.pos_start_bg = 60, 30
         self.pos_hero = 10, 240
@@ -105,6 +104,8 @@ class UltraManBeatMonsterGame:
                 if current_ts - first_message.timestamp >= 1:  # 延迟超过1s的就不要了
                     logger.warning('Got Delayed Message, Will Ignore!')
                     raise queue_lib.Empty
+                if self.image_hand is None and first_message.mat_data is not None:
+                    self.image_hand = pygame.surfarray.make_surface(first_message.mat_data)
             except queue_lib.Empty:
                 first_message = None
 
@@ -124,6 +125,8 @@ class UltraManBeatMonsterGame:
                 self.screen.blit(self.image_monster, self.pos_monster)
                 self.screen.blit(self.image_attack, self.pos_attack_from)
                 self.screen.blit(self.image_explode, self.pos_explode)
+                # if self.image_hand is not None:
+                #     self.screen.blit(self.image_hand, (350, 30))
                 is_attacking += 1
             elif 0 < is_attacking <= self.count_attack_to_destroy_monster:
 
@@ -141,10 +144,13 @@ class UltraManBeatMonsterGame:
                     self.screen.blit(self.image_attack, self.pos_attack_from)
                     # self.screen.blit(self.image_explode, self.pos_explode)
                 is_attacking += 1
+                # if self.image_hand is not None:
+                #     self.screen.blit(self.image_hand, (350, 30))
                 if is_attacking >= self.count_attack_to_destroy_monster:
                     self.count_monster_number -= 1
                     self.count_score += 1
                     is_attacking = 0
+                    self.image_hand = None
             else:
                 is_attacking = 0
                 self.screen.blit(self.image_hero_static, self.pos_hero)
