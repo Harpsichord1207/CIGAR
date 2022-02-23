@@ -215,12 +215,10 @@ def FaceRec(data):
 
             # 利用级联分类器鉴别人脸
             faces = face_casecade.detectMultiScale(gray_img, 1.3, 5)
-
             # 遍历每一帧图像，画出矩形
             for (x, y, w, h) in faces:
                 frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)  # 蓝色
                 roi_gray = gray_img[y:y + h, x:x + w]
-
                 try:
                     # 将图像转换为宽92 高112的图像
                     # resize（原图像，目标大小，（插值方法）interpolation=，）
@@ -234,6 +232,7 @@ def FaceRec(data):
                     '''
                     cv2.putText(frame, names[params[0]], (x, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
                 except:
+                    get_finger(ret, frame, "")
                     continue
 
             cv2.imshow('Dynamic', frame)
