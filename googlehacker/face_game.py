@@ -224,6 +224,7 @@ def FaceRec(data):
                     # resize（原图像，目标大小，（插值方法）interpolation=，）
                     roi_gray = cv2.resize(roi_gray, (92, 112), interpolation=cv2.INTER_LINEAR)
                     params = model.predict(roi_gray)
+                    print(names[params[0]])
                     print('Label:%s,confidence:%.2f' % (params[0], params[1]))
                     get_finger(ret, frame, names[params[0]])
                     '''
@@ -232,7 +233,6 @@ def FaceRec(data):
                     '''
                     cv2.putText(frame, names[params[0]], (x, y - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)
                 except:
-                    get_finger(ret, frame, "")
                     continue
 
             cv2.imshow('Dynamic', frame)
@@ -246,5 +246,5 @@ def FaceRec(data):
 
 if __name__ == '__main__':
     data = './face'
-    # generator(data)
+    #generator(data)
     FaceRec(data)
